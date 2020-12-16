@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.rgobbel.intellijflisp.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.rgobbel.intellijflisp.MyBundle
 
 class MyApplicationService {
 

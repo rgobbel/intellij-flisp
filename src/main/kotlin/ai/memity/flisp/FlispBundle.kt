@@ -1,13 +1,13 @@
-package com.github.rgobbel.intellijflisp
+package ai.memity.flisp
 
 import com.intellij.AbstractBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.MyBundle"
+private const val BUNDLE = "messages.FlispBundle"
 
-object MyBundle : AbstractBundle(BUNDLE) {
+object FlispBundle : AbstractBundle(BUNDLE) {
 
     @Suppress("SpreadOperator")
     @JvmStatic

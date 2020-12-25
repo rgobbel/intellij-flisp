@@ -1,19 +1,32 @@
 <idea-plugin>
-    <id>com.github.rgobbel.intellijflisp</id>
-    <name>intellij-flisp</name>
-    <vendor>rgobbel</vendor>
+    <id>ai.memity.flisp</id>
+    <name>Femtolisp</name>
+    <vendor>ai.memity</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.rgobbel.intellijflisp.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.rgobbel.intellijflisp.services.MyProjectService"/>
+        <applicationService serviceImplementation="ai.memity.flisp.services.MyApplicationService"/>
+        <projectService serviceImplementation="ai.memity.flisp.services.MyProjectService"/>
+        <fileType name="Femtolisp" language="Femtolisp" implementationClass="ai.memity.flisp.lang.FlispFileType"
+                  extensions="scm;lsp"/>
+        <lang.parserDefinition language="Femtolisp"
+                               implementationClass="ai.memity.flisp.lang.parser.FlispParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Femtolisp" implementationClass="ai.memity.flisp.ide.FlispSyntaxHighlighterFactory"/>
+        <lang.braceMatcher language="Femtolisp" implementationClass="ai.memity.flisp.lang.parser.FlispBraceMatcher"/>
+        <lang.foldingBuilder language="Femtolisp" implementationClass="ai.memity.flisp.editor.FlispFoldingBuilder"/>
+        <colorSettingsPage implementation="ai.memity.flisp.ide.colors.FlispColorSettingsPage"/>
+        <annotator language="Femtolisp" implementationClass="ai.memity.flisp.lang.psi.ext.FlispAnnotator"/>
+        <psi.referenceContributor implementation="ai.memity.flisp.lang.psi.FlispSymbolReferenceContributor"/>
+        <codeInsight.lineMarkerProvider language="Femtolisp" implementationClass="ai.memity.flisp.lang.FlispLineMarkerProvider"/>
+        <lang.psiStructureViewFactory language="Femtolisp" implementationClass="ai.memity.flisp.lang.FlispStructureViewFactory"/>
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.rgobbel.intellijflisp.listeners.MyProjectManagerListener"
+        <listener class="ai.memity.flisp.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
 </idea-plugin>

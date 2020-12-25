@@ -1,0 +1,189 @@
+{
+    generate=[names="long" tokenAccessors="no"]
+    tokens=[
+//        BI_LET='let'
+//        BI_LET_STAR='let*'
+//        CL_DEFUN='defun'
+//        CL_DEFMACRO='defmacro'
+//        CL_DEFVAR='defvar'
+//        SCM_DEFINE='define'
+//        SCM_DEFMACRO='define-macro'
+        LPAR='('
+        RPAR=')'
+        LBRACK='['
+        RBRACK=']'
+        LBRACE='{'
+        RBRACE='}'
+        LPAR_VEC='#('
+        DOT='.'
+        FORM_COMMENT_START='#;'
+//        FORM_COMMENT='regexp:#;(\w\w*|\([^)]*\))*'
+        QUOTE_CHAR="'"
+        BQUOTE_CHAR='`'
+        SHARP='#'
+        DOT_SHARP='.#'
+        COMMA=','
+        COMMA_AT=',@'
+        COMMA_DOT=',.'
+        DOT='.'
+        SEMI=';'
+        PIPE='|'
+        STRING='regexp:"[^"]*"'
+        BLOCK_COMMENT_START='#|'
+        BLOCK_COMMENT_BODY='regexp:([^#=]|(=[^#])|(#[^=]))'
+        BLOCK_COMMENT_END='|#'
+        BLOCK_COMMENT='regexp:#\|([^#=]|(=[^#])|(#[^=]))*\|#'
+        LINE_COMMENT=';.*'
+        SPACE=' '
+        EQUALS='='
+        COLON=':'
+        COMMA_BACK_AT=',\\@'
+        BACK_AT='\\@'
+        BACKREF='#.#'
+        BACKREF_DEF='#='
+        SHARP_DOT='#.'
+        ATSIGN='@'
+        SHARP_BACK_AT='#\\@'
+        KW="regexp:(:([^()\[\]'\";`,\\| \f\n\r\t\v]+)|:[^()\[\]'\";`,\\| \f\n\r\t\v]+:|[^()\[\]'\";`,\\| \f\n\r\t\v]+:)"
+        BOOL='regexp:#t|#f'
+        CHAR_LITERAL_START='regexp:#\\'
+        ONE_CHAR_LITERAL='regexp:\X'
+        WHITE_SPACE='regexp:\w'
+        UNICODE='regexp:[xu]\p{XDigit}{1,4}'
+        CHAR_NAME='regexp:(nul|alarm|backspace|tab|linefeed|vtab|page|return|esc|delete|newline)'
+//        number='regexp:\d+'
+        num='regexp:(0x\p{XDigit}+|0[0-7]+|\d*(\.|#(b[01]+|o[0-7]+|(\d+|(\d?\.\d+)|(\d+\.\d*)|x\p{XDigit}+)|\+NaN|-NaN|\+Inf|-Inf)'
+//        identifier='regexp:\w+'
+        sym="regexp:([^()\[\]'\";`,\\| \f\n\r\t\v]|\?)+"
+        whitespace='regexp:\s+'
+        comment='regexp:;.*'
+    ]
+    parserClass='ai.memity.flisp.lang.parser.FlispParser'
+    parserUtilClass="ai.memity.flisp.lang.parser.FlispParserUtil"
+
+    implements='ai.memity.flisp.lang.psi.ext.FlElement'
+    extends='ai.memity.flisp.lang.psi.impl.FlElementImpl'
+
+    elementTypeHolderClass='ai.memity.flisp.lang.psi.FlispElementTypes'
+
+    elementTypeClass='ai.memity.flisp.lang.psi.FlispElementType'
+    tokenTypeClass='ai.memity.flisp.lang.psi.FlispTokenType'
+
+    psiClassPrefix='Fl'
+    psiImplClassSuffix='Impl'
+    psiPackage='ai.memity.flisp.lang.psi'
+    psiImplPackage='ai.memity.flisp.lang.psi.impl'
+
+    psiImplUtilClass='ai.memity.flisp.lang.psi.impl.FlispPsiImplUtil'
+
+    parserImports=[
+        'static ai.memity.flisp.lang.parser.FlispParserUtil.adapt_builder_'
+        'static ai.memity.flisp.lang.parser.FlispParserUtil.*'
+    ]
+    psiVisitorName='FlispVisitor'
+//    mixin("symbol")="ai.memity.flisp.lang.psi.impl.FSymbolBase"
+    elementTypePrefix='F_'
+    consumeTokenMethod("commented")="fast"
+    extends("commented|p_form|s_form")=form
+    extends("dotted|list|vector")=p_form
+    extends("symbol|literal")=s_form
+    extends("quoted|bquoted|num_literal|kw_literal|string_literal|bool_literal|char_literal")=literal
+    name("reader_macro")=form
+    pin("vector")="'[\[]'"
+    pin("list")="'[\(]'"
+    pin("dotted")="'[\.]'"
+
+}
+//root ::= <<parseTree (root_entry)>>
+root ::= root_entry *
+private root_entry ::= not_eof (commented|form)
+form ::= (form_prefix form_prefix *) form_upper | form_base {
+    pin(".*")=1 methods=[form="" toString]
+}
+upper form_upper ::= form_base {elementType=form name=form}
+private form_prefix ::= commented | reader_macro
+private form_base ::= p_forms | s_forms
+private not_eof ::= !<<eof>>
+
+private p_forms ::= dotted | list | vector {methods=[getNth]}
+private s_forms ::= symbol | literal
+
+fake p_form ::= form * {methods=[forms="form" getFirst getRest getNth]}
+fake s_form ::= form * {methods=[forms="form"]}
+
+//private cons ::= dotted | list
+//list ::= '(' list_body ('.' form)? ')' {pin=1 methods=[getFirst getRest getCar getCdr getNth]}
+list ::= '(' list_body dotted? ')' {pin=1 methods=[getCar getCdr getFirst getRest getNth]}
+//list ::= '(' (!('.'|')') (commented|form))* dotted? ')' {pin=1 methods=[getFirst getRest getCar getCdr getNth] recoverWhile=rpar_recover}
+//list ::= '(' (!('.'|')') (commented|form))* ('.' form)? ')' {pin=1 methods=[getFirst getRest getCar getCdr getNth] recoverWhile=rpar_recover}
+//dotted ::= '(' dotted_body '.' form ')' {pin=3 methods=[getCar getCdr]}
+left upper dotted ::= ('.'  form) {pin=1 methods=[getCar getCdr]}
+//private rpar_recover ::= !')'
+vector ::= '[' vector_body ']' | '#(' list_body ')'
+
+symbol ::= sym {
+//    stubClass="ai.memity.flisp.lang.psi.impl.FlSymbolStub"
+    methods=[getName getTextOffset getValue]
+//    mixin="ai.memity.flisp.lang.psi.impl.FlSymbolMixin"
+//    extends="ai.memity.flisp.lang.IFSymbol"
+//    extends="com.intellij.psi.NavigatablePsiElement"
+//    extends="com.intellij.psi.PsiNamedElement,ai.memity.flisp.lang.IFSymbol"
+//    extends="com.intellij.psi.StubBasedPsiElement"
+    }
+//fake literals ::=
+literal ::= quoted | bquoted | num_literal | kw_literal | string_literal | bool_literal | char_literal  {
+//    methods=[number="" quoted="" bquoted=""]
+}
+//dot_element ::= '.'
+num_literal ::= num {methods=[getValue]}
+char_literal ::= CHAR {methods=[getValue]}
+bool_literal ::= BOOL {methods=[getValue]}
+kw_literal ::= KW {methods=[getValue]}
+string_literal ::= STRING {methods=[getValue]}
+//dot_literal ::= DOT {methods=[]}
+//char_literal ::= ONE_CHAR_LITERAL | (CHAR_LITERAL_START <<nospace>> (UNICODE | CHAR_NAME))
+//    {methods=[getLiteralValue]}
+
+commented ::= '#;' form  {pin=1}
+
+quoted ::= "'" form
+bquoted ::= '`' form
+
+private meta items ::= (<<recover>> (commented | <<param>>)) * {pin=1 recoverWhile="<<recover>>"}
+private meta items2 ::= (<<sentinel>> (commented | <<param>>)) * {pin=1 recoverWhile="<<recover>>"}
+//private meta items_entry ::= <<recover>> <<param>> {pin=1}
+private list_body ::= <<items2 !('.'|')') form !(')'|'.')>>
+//private dotted_body ::= <<items2 !('.'|')') form !'.'>>
+private vector_body ::= <<items !']' form>>
+
+reader_macro ::= ',.' | '.#' | ',' | ',@' | '=' | ',\\@' | '\\@' | '|'
+
+//defined_sym ::= symbol {methods=[toString]}
+//
+//sym_list_body ::= <<items !')' symbol>>
+//sym_list ::= '(' sym_list_body ')'
+//cl_arglist ::= sym_list
+//cl_fn_def ::= '(' 'defun' defined_sym cl_arglist form+ ')'
+//cl_macro_def ::= '(' 'defmacro' defined_sym form+ ')'
+//cl_var_def ::= '(' 'defvar' defined_sym form ')'
+//
+//scm_arglist ::= '(' defined_sym ((form+ "." form) | form+)? ')'
+//scm_fn_def ::= '(' 'define' scm_arglist form* ')'
+//scm_macro_def ::= '(' 'define-macro' scm_arglist form* ')'
+//scm_var_def ::= '(' 'define' defined_sym form* ')'
+//
+//fn_def ::= scm_fn_def | cl_fn_def
+//macro_def ::= scm_macro_def | cl_macro_def
+//var_def ::= scm_var_def | cl_var_def
+//defn ::= fn_def | macro_def | var_def {
+    //mixin="ai.memity.flisp.lang.psi.impl.FlispDefinitionMixin"
+//    methods=[getDefName getDefSym toString]
+//}
+
+//pair_list ::= '(' ('(' symbol form ')' )+ ')'
+//let_form ::= '(' ('let'|'let*') (defined_sym | pair_list) form+ ')'
+
+//unquote1 ::= ',' form
+//unquote_dot ::= ',.' form
+//unquote_splice ::= ',@' form
+//unquote ::= unquote1 | unquote_dot | unquote_splice

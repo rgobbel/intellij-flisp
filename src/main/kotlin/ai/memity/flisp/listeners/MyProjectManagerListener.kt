@@ -1,9 +1,9 @@
-package com.github.rgobbel.intellijflisp.listeners
+package ai.memity.flisp.listeners
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
-import com.github.rgobbel.intellijflisp.services.MyProjectService
+import ai.memity.flisp.services.MyProjectService
 
 internal class MyProjectManagerListener : ProjectManagerListener {
 
